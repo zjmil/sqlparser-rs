@@ -706,11 +706,16 @@ pub enum Statement {
         /// A SQL query that specifies what to explain
         statement: Box<Statement>,
     },
-    // Snowflake specific commands for interacting with stages
+    // PUT & GET are Snowflake specific commands for interacting with stages
     Put {
         file_path: String,
         stage: ObjectName,
         stage_path: String,
+    },
+    Get {
+        stage: ObjectName,
+        stage_path: String,
+        file_path: String,
     },
 }
 
@@ -1248,6 +1253,13 @@ impl fmt::Display for Statement {
                 stage_path
             } => {
                 write!(f, "PUT file://{} @{}{}", file_path, stage, stage_path)
+            }
+            Statement::Get {
+                stage,
+                stage_path,
+                file_path
+            } => {
+                write!(f, "GET @{}{} file://{}", stage, stage_path, file_path)
             }
         }
     }

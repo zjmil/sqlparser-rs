@@ -168,7 +168,10 @@ impl<'a> Parser<'a> {
                     Ok(self.parse_insert()?)
                 }
                 Keyword::PUT if dialect_of!(self is SnowflakeDialect) => {
-                    Ok(self.parse_put()?)
+                    Ok(self.parse_snowflake_put()?)
+                }
+                Keyword::GET if dialect_of!(self is SnowflakeDialect) => {
+                    Ok(self.parse_snowflake_get()?)
                 }
                 _ => self.expected("an SQL statement", Token::Word(w)),
             },
@@ -3098,13 +3101,12 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_put(&mut self) -> Result<Statement, ParserError> {
+    fn parse_snowflake_put(&mut self) -> Result<Statement, ParserError> {
         self.expect_token(&Token::make_word("file", None))?;
         self.expect_token(&Token::ColonSlashSlash)?;
         let file_path = self.parse_path()?;
 
-        self.expect_token(&Token::AtSign)?;
-        let stage = self.parse_object_name()?;
+        let stage = self.parse_snowflake_stage()?;
         let stage_path = self.parse_path()?;
 
         Ok(Statement::Put {
@@ -3114,16 +3116,40 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn parse_snowflake_get(&mut self) -> Result<Statement, ParserError> {
+        let stage = self.parse_snowflake_stage()?;
+        let stage_path = self.parse_path()?;
+
+        self.expect_token(&Token::make_word("file", None))?;
+        self.expect_token(&Token::ColonSlashSlash)?;
+        let file_path = self.parse_path()?;
+
+        Ok(Statement::Get {
+            stage,
+            stage_path,
+            file_path
+        })
+    }
+
+    fn parse_snowflake_stage(&mut self) -> Result<ObjectName, ParserError> {
+        self.expect_token(&Token::AtSign)?;
+        if self.consume_token(&Token::Tilde) {
+            Ok(ObjectName(vec![Ident::new("~")]))
+        } else {
+            self.parse_object_name()
+        }
+    }
+
     fn parse_path(&mut self) -> Result<String, ParserError> {
         let mut path = String::new();
-        loop {
-            match self.peek_token() {
+        while let Some(token) = self.next_token_no_skip() {
+            // TODO: handle windows paths, there's probably a better way to do this
+            match token {
                 Token::Word(w) => path += &w.value,
                 Token::Period => path += ".",
                 Token::Div => path += "/",
                 _ => break,
             };
-            self.next_token();
         };
         Ok(path)
     }

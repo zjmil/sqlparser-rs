@@ -1153,6 +1153,33 @@ mod tests {
         compare(expected, tokens);
     }
 
+    #[test]
+    fn tokenize_snowflake_get() {
+        let sql = "GET @~/data.json file:///data.json";
+        let dialect = SnowflakeDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        let expected = vec![
+            Token::make_keyword("GET"),
+            Token::Whitespace(Whitespace::Space),
+            Token::AtSign,
+            Token::Tilde,
+            Token::Div,
+            Token::make_word("data", None),
+            Token::Period,
+            Token::make_word("json", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("file", None),
+            Token::ColonSlashSlash,
+            Token::Div,
+            Token::make_word("data", None),
+            Token::Period,
+            Token::make_word("json", None),
+        ];
+        compare(expected, tokens);
+    }
+
+
     fn compare(expected: Vec<Token>, actual: Vec<Token>) {
         //println!("------------------------------");
         //println!("tokens   = {:?}", actual);
