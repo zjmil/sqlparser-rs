@@ -86,6 +86,8 @@ pub enum Token {
     Colon,
     /// DoubleColon `::` (used for casting in postgresql)
     DoubleColon,
+    /// ColonSlashSlash (used for file protocol in Snowflake put)
+    ColonSlashSlash,
     /// SemiColon `;` used as separator for COPY and payload
     SemiColon,
     /// Backslash `\` used in terminating the COPY payload with `\.`
@@ -156,6 +158,7 @@ impl fmt::Display for Token {
             Token::RParen => f.write_str(")"),
             Token::Period => f.write_str("."),
             Token::Colon => f.write_str(":"),
+            Token::ColonSlashSlash => f.write_str("://"),
             Token::DoubleColon => f.write_str("::"),
             Token::SemiColon => f.write_str(";"),
             Token::Backslash => f.write_str("\\"),
@@ -516,6 +519,16 @@ impl<'a> Tokenizer<'a> {
                     chars.next();
                     match chars.peek() {
                         Some(':') => self.consume_and_return(chars, Token::DoubleColon),
+                        Some('/') if dialect_of!(self is SnowflakeDialect) => {
+                            chars.next();
+                            match chars.peek() {
+                                Some('/') => {
+                                    chars.next();
+                                    self.consume_and_return(chars, Token::ColonSlashSlash)
+                                }
+                                _ => self.tokenizer_error("Unexpected sequence :/"),
+                            }
+                        },
                         _ => Ok(Some(Token::Colon)),
                     }
                 }
@@ -1107,6 +1120,40 @@ mod tests {
             Token::make_keyword("FROM"),
             Token::Whitespace(Whitespace::Space),
             Token::make_word("foo", None),
+        ];
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_snowflake_put() {
+        let sql = "PUT file:////path/to/file.csv @db.schema.stage/other/path";
+        let dialect = SnowflakeDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        let expected = vec![
+            Token::make_keyword("PUT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("file", None),
+            Token::ColonSlashSlash,
+            Token::Div,
+            Token::make_word("path", None),
+            Token::Div,
+            Token::make_word("to", None),
+            Token::Div,
+            Token::make_word("file", None),
+            Token::Period,
+            Token::make_word("csv", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::AtSign,
+            Token::make_word("db", None),
+            Token::Period,
+            Token::make_word("schema", None),
+            Token::Period,
+            Token::make_word("stage", None),
+            Token::Div,
+            Token::make_word("other", None),
+            Token::Div,
+            Token::make_word("path", None),
         ];
         compare(expected, tokens);
     }
