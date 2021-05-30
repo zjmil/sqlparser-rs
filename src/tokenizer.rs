@@ -523,7 +523,6 @@ impl<'a> Tokenizer<'a> {
                             chars.next();
                             match chars.peek() {
                                 Some('/') => {
-                                    chars.next();
                                     self.consume_and_return(chars, Token::ColonSlashSlash)
                                 }
                                 _ => self.tokenizer_error("Unexpected sequence :/"),
@@ -1126,7 +1125,7 @@ mod tests {
 
     #[test]
     fn tokenize_snowflake_put() {
-        let sql = "PUT file:////path/to/file.csv @db.schema.stage/other/path";
+        let sql = "PUT file:///file.csv @db.schema.stage/some/path";
         let dialect = SnowflakeDialect {};
         let mut tokenizer = Tokenizer::new(&dialect, sql);
         let tokens = tokenizer.tokenize().unwrap();
@@ -1135,10 +1134,6 @@ mod tests {
             Token::Whitespace(Whitespace::Space),
             Token::make_word("file", None),
             Token::ColonSlashSlash,
-            Token::Div,
-            Token::make_word("path", None),
-            Token::Div,
-            Token::make_word("to", None),
             Token::Div,
             Token::make_word("file", None),
             Token::Period,
@@ -1151,7 +1146,7 @@ mod tests {
             Token::Period,
             Token::make_word("stage", None),
             Token::Div,
-            Token::make_word("other", None),
+            Token::make_word("some", None),
             Token::Div,
             Token::make_word("path", None),
         ];
