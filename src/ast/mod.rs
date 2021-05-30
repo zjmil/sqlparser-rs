@@ -706,6 +706,12 @@ pub enum Statement {
         /// A SQL query that specifies what to explain
         statement: Box<Statement>,
     },
+    // Snowflake specific commands for interacting with stages
+    Put {
+        file_path: String,
+        stage: ObjectName,
+        stage_path: String,
+    },
 }
 
 impl fmt::Display for Statement {
@@ -1235,6 +1241,13 @@ impl fmt::Display for Statement {
                     write!(f, "({}) ", display_comma_separated(data_types))?;
                 }
                 write!(f, "AS {}", statement)
+            }
+            Statement::Put {
+                file_path,
+                stage,
+                stage_path
+            } => {
+                write!(f, "PUT file://{} @{}{}", file_path, stage, stage_path)
             }
         }
     }

@@ -167,6 +167,9 @@ impl<'a> Parser<'a> {
                     self.prev_token();
                     Ok(self.parse_insert()?)
                 }
+                Keyword::PUT if dialect_of!(self is SnowflakeDialect) => {
+                    Ok(self.parse_put()?)
+                }
                 _ => self.expected("an SQL statement", Token::Word(w)),
             },
             Token::LParen => {
@@ -3093,6 +3096,36 @@ impl<'a> Parser<'a> {
             data_types,
             statement,
         })
+    }
+
+    fn parse_put(&mut self) -> Result<Statement, ParserError> {
+        self.expect_token(&Token::make_word("file", None))?;
+        self.expect_token(&Token::ColonSlashSlash)?;
+        let file_path = self.parse_path()?;
+
+        self.expect_token(&Token::AtSign)?;
+        let stage = self.parse_object_name()?;
+        let stage_path = self.parse_path()?;
+
+        Ok(Statement::Put {
+            file_path,
+            stage,
+            stage_path
+        })
+    }
+
+    fn parse_path(&mut self) -> Result<String, ParserError> {
+        let mut path = String::new();
+        loop {
+            match self.peek_token() {
+                Token::Word(w) => path += &w.value,
+                Token::Period => path += ".",
+                Token::Div => path += "/",
+                _ => break,
+            };
+            self.next_token();
+        };
+        Ok(path)
     }
 }
 

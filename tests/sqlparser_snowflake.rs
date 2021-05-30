@@ -35,6 +35,19 @@ fn test_snowflake_create_table() {
 }
 
 #[test]
+fn test_snowflake_put() {
+    let sql = "PUT file:///file.csv @db.schema.stage/some/path";
+    match snowflake().verified_stmt(sql) {
+        Statement::Put {file_path, stage, stage_path } => {
+            assert_eq!("/file.csv", file_path);
+            assert_eq!("db.schema.stage", stage.to_string());
+            assert_eq!("/some/path", stage_path);
+        }
+        _ => unreachable!(),
+    }
+}
+
+#[test]
 fn test_snowflake_single_line_tokenize() {
     let sql = "CREATE TABLE# this is a comment \ntable_1";
     let dialect = SnowflakeDialect {};
