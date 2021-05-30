@@ -522,12 +522,10 @@ impl<'a> Tokenizer<'a> {
                         Some('/') if dialect_of!(self is SnowflakeDialect) => {
                             chars.next();
                             match chars.peek() {
-                                Some('/') => {
-                                    self.consume_and_return(chars, Token::ColonSlashSlash)
-                                }
+                                Some('/') => self.consume_and_return(chars, Token::ColonSlashSlash),
                                 _ => self.tokenizer_error("Unexpected sequence :/"),
                             }
-                        },
+                        }
                         _ => Ok(Some(Token::Colon)),
                     }
                 }
@@ -1178,7 +1176,6 @@ mod tests {
         ];
         compare(expected, tokens);
     }
-
 
     fn compare(expected: Vec<Token>, actual: Vec<Token>) {
         //println!("------------------------------");

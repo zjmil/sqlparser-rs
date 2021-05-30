@@ -1250,14 +1250,14 @@ impl fmt::Display for Statement {
             Statement::Put {
                 file_path,
                 stage,
-                stage_path
+                stage_path,
             } => {
                 write!(f, "PUT file://{} @{}{}", file_path, stage, stage_path)
             }
             Statement::Get {
                 stage,
                 stage_path,
-                file_path
+                file_path,
             } => {
                 write!(f, "GET @{}{} file://{}", stage, stage_path, file_path)
             }

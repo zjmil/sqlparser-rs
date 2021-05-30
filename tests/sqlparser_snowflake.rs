@@ -38,7 +38,11 @@ fn test_snowflake_create_table() {
 fn test_snowflake_put() {
     let sql = "PUT file://./file.csv @db.schema.stage/some/path";
     match snowflake().verified_stmt(sql) {
-        Statement::Put {file_path, stage, stage_path } => {
+        Statement::Put {
+            file_path,
+            stage,
+            stage_path,
+        } => {
             assert_eq!("./file.csv", file_path);
             assert_eq!("db.schema.stage", stage.to_string());
             assert_eq!("/some/path", stage_path);
@@ -51,7 +55,11 @@ fn test_snowflake_put() {
 fn test_snowflake_put_home() {
     let sql = "PUT file:///path/to/file.csv @~/some/path";
     match snowflake().verified_stmt(sql) {
-        Statement::Put {file_path, stage, stage_path } => {
+        Statement::Put {
+            file_path,
+            stage,
+            stage_path,
+        } => {
             assert_eq!("/path/to/file.csv", file_path);
             assert_eq!("~", stage.to_string());
             assert_eq!("/some/path", stage_path);
@@ -64,7 +72,11 @@ fn test_snowflake_put_home() {
 fn test_snowflake_get() {
     let sql = "GET @json_data/data/file.json file:///absolute/path/to/file.json";
     match snowflake().verified_stmt(sql) {
-        Statement::Get { stage, stage_path, file_path } => {
+        Statement::Get {
+            stage,
+            stage_path,
+            file_path,
+        } => {
             assert_eq!("json_data", stage.to_string());
             assert_eq!("/data/file.json", stage_path);
             assert_eq!("/absolute/path/to/file.json", file_path);

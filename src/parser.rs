@@ -3112,7 +3112,7 @@ impl<'a> Parser<'a> {
         Ok(Statement::Put {
             file_path,
             stage,
-            stage_path
+            stage_path,
         })
     }
 
@@ -3127,7 +3127,7 @@ impl<'a> Parser<'a> {
         Ok(Statement::Get {
             stage,
             stage_path,
-            file_path
+            file_path,
         })
     }
 
@@ -3150,7 +3150,7 @@ impl<'a> Parser<'a> {
                 Token::Div => path += "/",
                 _ => break,
             };
-        };
+        }
         Ok(path)
     }
 }
